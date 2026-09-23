@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAFE'n GO — Coffee Menu</title>
+<style>
+:root {
+  --wine:#5b0615; --gold:#f3c43e; --cream:#fffaf2; --brown:#4a241b;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--cream);color:#2d1b16}
+button{font:inherit;cursor:pointer}
+.hero{background:linear-gradient(135deg,#4b0612,#760d1e);color:white;padding:38px 20px 34px;text-align:center}
+.hero small{color:#f3c43e;font-size:20px;letter-spacing:2px}
+.hero h1{margin:8px 0 4px;font-size:48px;letter-spacing:2px}
+.hero p{margin:0;color:#f7d96c}
+.wrap{max-width:1050px;margin:auto;padding:24px 16px 100px}
+.menu-title{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:18px}
+.menu-title h2{margin:0;font-size:28px}
+.menu-title span{color:#765b52}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.card{background:#fff;border:1px solid #eadfd3;border-radius:18px;overflow:hidden;box-shadow:0 5px 18px #4a241b12;transition:.2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 24px #4a241b20}
+.pic{height:170px;background:#f3eee7;position:relative;overflow:hidden}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.card-body{padding:16px}
+.card h3{margin:0 0 6px;font-size:19px}
+.desc{margin:0 0 12px;color:#7b6860;font-size:13px;min-height:32px}
+.price{font-weight:800;color:var(--wine);font-size:18px}
+.action{margin-top:12px;width:100%;border:0;border-radius:12px;padding:11px;background:var(--wine);color:white;font-weight:700}
+.action:hover{background:#760d1e}
+.badge{position:absolute;top:10px;left:10px;background:#f3c43e;color:#4a241b;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:800;z-index:2}
+.cartbar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e5d8cd;padding:12px 16px;display:flex;justify-content:center;z-index:5}
+.cartbar button{max-width:700px;width:100%;border:0;background:var(--wine);color:white;padding:14px 18px;border-radius:14px;font-weight:800;display:flex;justify-content:space-between}
+.modal-bg{display:none;position:fixed;inset:0;background:#1e090bb0;z-index:10;padding:18px;align-items:center;justify-content:center}
+.modal{background:white;border-radius:20px;max-width:520px;width:100%;padding:22px;max-height:90vh;overflow:auto}
+.modal h2{margin-top:0}
+.sizes{display:flex;gap:8px;margin:12px 0}
+.sizes button{flex:1;border:1px solid #dccfc5;background:white;border-radius:10px;padding:10px}
+.sizes button.active{background:var(--wine);color:white;border-color:var(--wine)}
+input,textarea{width:100%;padding:12px;border:1px solid #ddcfc5;border-radius:10px;margin:6px 0 12px;font-size:15px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.summary{background:#faf4ec;padding:12px;border-radius:12px;margin:12px 0}
+.close{float:right;border:0;background:#eee;border-radius:50%;width:34px;height:34px}
+.success{text-align:center;padding:20px}
+
+/* Төлбөрийн товчнууд */
+.pay-methods{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:6px 0 14px}
+.pay-btn{border:1px solid #dccfc5;background:white;border-radius:10px;padding:12px 8px;font-size:13px;font-weight:600;transition:.2s}
+.pay-btn.active{background:var(--wine);color:white;border-color:var(--wine)}
+.pay-btn:hover{border-color:var(--wine)}
+
+/* Төлбөрийн процесс */
+.pay-processing{text-align:center;padding:20px}
+.spinner{width:50px;height:50px;border:5px solid #eee;border-top:5px solid var(--wine);border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.qr-box{text-align:center;padding:10px}
+.qr-box img{width:240px;height:240px;border:1px solid #eee;border-radius:12px;padding:8px;background:white}
+.paid-badge{display:inline-block;background:#e8f7e8;color:#1e7a1e;padding:8px 16px;border-radius:999px;font-weight:700;margin-top:12px}
+.step-info{color:#7b6860;font-size:13px;margin:8px 0}
+
+@media(max-width:520px){.hero h1{font-size:38px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card-body{padding:12px}.pic{height:125px}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <small>CAFE'n GO</small>
+  <h1>COFFEE MENU</h1>
+  <p>Дуртай кофегоо сонгоод захиалаарай ☕</p>
+</header>
+
+<main class="wrap">
+  <div class="menu-title">
+    <div><h2>Манай меню</h2><span>Халуун • Мөстэй</span></div>
+    <span>S 13K · M 14K · L 15K</span>
+  </div>
+  <section id="grid" class="grid"></section>
+</main>
+
+<div class="cartbar">
+  <button onclick="openCart()"><span>🛒 Захиалга</span><span id="cartCount">0 ширхэг · 0₮</span></button>
+</div>
+
+<!-- Product Modal -->
+<div id="productModal" class="modal-bg">
+  <div class="modal">
+    <button class="close" onclick="closeModal('productModal')">×</button>
+    <img id="pmImg" style="width:100%;height:200px;object-fit:cover;border-radius:14px;margin-bottom:10px">
+    <h2 id="pmTitle"></h2>
+    <p id="pmDesc" class="desc"></p>
+    <b>Хэмжээ</b>
+    <div class="sizes">
+      <button onclick="pickSize('S')" id="sS">S · 13K</button>
+      <button onclick="pickSize('M')" id="sM">M · 14K</button>
+      <button onclick="pickSize('L')" id="sL">L · 15K</button>
+    </div>
+    <label>Тоо ширхэг</label>
+    <input id="qty" type="number" min="1" value="1">
+    <button class="action" onclick="addToCart()">Сагсанд нэмэх</button>
+  </div>
+</div>
+
+<!-- Cart Modal -->
+<div id="cartModal" class="modal-bg">
+  <div class="modal" id="cartModalContent">
+    <button class="close" onclick="closeModal('cartModal')">×</button>
+    <h2>Таны захиалга</h2>
+    <div id="cartItems"></div>
+    <div class="summary"><b>Нийт: <span id="total"></span>₮</b></div>
+    <div class="row">
+      <div><label>Нэр</label><input id="name" placeholder="Таны нэр"></div>
+      <div><label>Ширээ №</label><input id="table" placeholder="Жишээ: 5"></div>
+    </div>
+    <label>Нэмэлт хүсэлт</label>
+    <textarea id="note" rows="2" placeholder="Жишээ: сахаргүй"></textarea>
+
+    <!-- Төлбөрийн хэлбэр -->
+    <label><b>Төлбөрийн хэлбэр</b></label>
+    <div class="pay-methods">
+      <button type="button" class="pay-btn active" onclick="pickPay('cash', this)">💵 Бэлнээр</button>
+      <button type="button" class="pay-btn" onclick="pickPay('card', this)">💳 Карт</button>
+      <button type="button" class="pay-btn" onclick="pickPay('qpay', this)">📱 QPay</button>
+      <button type="button" class="pay-btn" onclick="pickPay('social', this)">🏦 SocialPay</button>
+    </div>
+
+    <button class="action" onclick="placeOrder()">Захиалга баталгаажуулах</button>
+  </div>
+</div>
+
+<script>
+/* ============================================
+   CAFE'n GO — Захиалга + Төлбөрийн систем
+   ============================================ */
+
+/* ---------- ЗУРГУУД ----------
+   ⚠️ Та өөрийн зургуудыг оруулахдаа img талбарыг солино.
+   Жишээ: "images/iced-latte.jpg" эсвэл интернэт линк.
+-------------------------------- */
+const products = [
+  {
+    name:"Iced Latte",
+    desc:"Сүүтэй мөстэй кофе",
+    type:"latte",
+    popular:true,
+    img:"https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=600&q=80"
+  },
+  {
+    name:"Hot Latte",
+    desc:"Сүүтэй халуун кофе",
+    type:"latte",
+    img:"https://images.unsplash.com/photo-1541167760496-1628856ab772?w=600&q=80"
+  },
+  {
+    name:"Iced Americano",
+    desc:"Мөстэй американо",
+    type:"americano",
+    img:"https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=600&q=80"
+  },
+  {
+    name:"Hot Americano",
+    desc:"Халуун американо",
+    type:"americano",
+    img:"https://images.unsplash.com/photo-1551030173-122aabc4489c?w=600&q=80"
+  },
+  {
+    name:"Iced Cappuccino",
+    desc:"Мөстэй капучино",
+    type:"latte",
+    img:"https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=600&q=80"
+  },
+  {
+    name:"Hot Cappuccino",
+    desc:"Халуун капучино",
+    type:"latte",
+    img:"https://images.unsplash.com/photo-1534778101976-62847782c213?w=600&q=80"
+  },
+  {
+    name:"Iced Matcha",
+    desc:"Мөстэй матча",
+    type:"matcha",
+    img:"https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=600&q=80"
+  },
+  {
+    name:"Hot Matcha",
+    desc:"Халуун матча",
+    type:"matcha",
+    img:"https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=600&q=80"
+  },
+  {
+    name:"Iced Mocha",
+    desc:"Шоколадтай мөстэй кофе",
+    type:"mocha",
+    img:"https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=600&q=80"
+  },
+  {
+    name:"Hot Mocha",
+    desc:"Шоколадтай халуун кофе",
+    type:"mocha",
+    img:"https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=600&q=80"
+  }
+];
+
+const prices = { S:13000, M:14000, L:15000 };
+let cart = [];
+let selected = null;
+let selectedSize = "M";
+let payMethod = "cash";
+
+/* ---------- Меню render ---------- */
+function render(){
+  document.getElementById("grid").innerHTML = products.map((p,i)=>`
+   <article class="card">
+     <div class="pic">
+       ${p.popular?'<span class="badge">POPULAR</span>':''}
+       <img src="${p.img}" alt="${p.name}" loading="lazy"
+            onerror="this.src='https://via.placeholder.com/400x300/f3eee7/8c5535?text=Coffee'">
+     </div>
+     <div class="card-body">
+       <h3>${p.name}</h3>
+       <p class="desc">${p.desc}</p>
+       <div class="price">S 13K · M 14K · L 15K</div>
+       <button class="action" onclick="openProduct(${i})">Сонгох</button>
+     </div>
+   </article>`).join("");
+}
+
+/* ---------- Product modal ---------- */
+function openProduct(i){
+  selected = i;
+  selectedSize = "M";
+  document.getElementById("pmImg").src = products[i].img;
+  document.getElementById("pmTitle").textContent = products[i].name;
+  document.getElementById("pmDesc").textContent = products[i].desc;
+  document.getElementById("qty").value = 1;
+  updateSizes();
+  document.getElementById("productModal").style.display = "flex";
+}
+function closeModal(id){ document.getElementById(id).style.display = "none"; }
+function pickSize(s){ selectedSize = s; updateSizes(); }
+function updateSizes(){
+  ["S","M","L"].forEach(s=>document.getElementById("s"+s).classList.toggle("active", s===selectedSize));
+}
+
+/* ---------- Сагс ---------- */
+function addToCart(){
+  const qty = Math.max(1, parseInt(document.getElementById("qty").value)||1);
+  cart.push({
+    name: products[selected].name,
+    img: products[selected].img,
+    size: selectedSize,
+    price: prices[selectedSize],
+    qty
+  });
+  closeModal("productModal");
+  updateCart();
+}
+function updateCart(){
+  const count = cart.reduce((a,x)=>a+x.qty, 0);
+  const total = cart.reduce((a,x)=>a+x.price*x.qty, 0);
+  document.getElementById("cartCount").textContent = `${count} ширхэг · ${total.toLocaleString()}₮`;
+}
+
+/* ---------- Cart modal ---------- */
+function openCart(){
+  renderCart();
+  document.getElementById("cartModal").style.display = "flex";
+}
+function renderCart(){
+  const box = document.getElementById("cartItems");
+  if(!cart.length){
+    box.innerHTML = "<p>Одоогоор сагс хоосон байна.</p>";
+    document.getElementById("total").textContent = "0";
+    return;
+  }
+  box.innerHTML = cart.map(x=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee">
+      <img src="${x.img}" style="width:48px;height:48px;border-radius:8px;object-fit:cover">
+      <span style="flex:1">${x.name} · ${x.size} × ${x.qty}</span>
+      <b>${(x.price*x.qty).toLocaleString()}₮</b>
+    </div>`).join("");
+  document.getElementById("total").textContent = cart.reduce((a,x)=>a+x.price*x.qty,0).toLocaleString();
+}
+
+/* ---------- Төлбөрийн арга сонгох ---------- */
+function pickPay(m, btn){
+  payMethod = m;
+  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ---------- Захиалга баталгаажуулах ---------- */
+async function placeOrder(){
+  if(!cart.length) return alert("Эхлээд кофе сонгоно уу.");
+  const name = document.getElementById("name").value.trim();
+  const table = document.getElementById("table").value.trim();
+  const note = document.getElementById("note").value.trim();
+  if(!name || !table) return alert("Нэр болон ширээний дугаараа оруулна уу.");
+
+  const total = cart.reduce((a,x)=>a+x.price*x.qty, 0);
+
+  if(payMethod === "cash"){
+    showSuccess(name, table, "cash");
+    return;
+  }
+  if(payMethod === "card"){
+    showCardForm(name, table, note, total);
+    return;
+  }
+  showQRPayment(name, table, note, total, payMethod);
+}
+
+/* ---------- Амжилттай ---------- */
+function showSuccess(name, table, method){
+  const orderNo = Math.floor(1000 + Math.random()*9000);
+  const methodText = {cash:"Бэлнээр", card:"Картаар", qpay:"QPay", social:"SocialPay"}[method] || method;
+  document.getElementById("cartModalContent").innerHTML = `
+    <div class="success">
+      <div style="font-size:55px">☕</div>
+      <h2>Захиалга амжилттай!</h2>
+      <p>${name}, таны <b>#${orderNo}</b> захиалга бүртгэгдлээ.</p>
+      <p>Ширээ: <b>${table}</b></p>
+      <p>Төлбөр: <b>${methodText}</b></p>
+      <p class="step-info">Кофе бэлэн болмогц мэдэгдэнэ.</p>
+      <button class="action" onclick="location.reload()">Шинэ захиалга</button>
+    </div>`;
+}
+
+/* ---------- Картын маягт ---------- */
+function showCardForm(name, table, note, total){
+  document.getElementById("cartModalContent").innerHTML = `
+    <button class="close" onclick="closeModal('cartModal')">×</button>
+    <h2>💳 Картын мэдээлэл</h2>
+    <p class="step-info">Төлөх дүн: <b>${total.toLocaleString()}₮</b></p>
+    <label>Картын дугаар</label>
+    <input id="cardNo" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCard(this)">
+    <div class="row">
+      <div><label>Хугацаа</label><input id="cardExp" placeholder="MM/YY" maxlength="5" oninput="formatExp(this)"></div>
+      <div><label>CVV</label><input id="cardCvv" placeholder="123" maxlength="3" type="password"></div>
+    </div>
+    <label>Картын эзний нэр</label>
+    <input id="cardName" placeholder="BAT DORJ">
+    <button class="action" onclick="processCard('${name}','${table}','${note}',${total})">Төлбөр төлөх</button>`;
+}
+
+function formatCard(el){
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+function formatExp(el){
+  let v = el.value.replace(/\D/g,'').substring(0,4);
+  if(v.length>=3) v = v.substring(0,2) + '/' + v.substring(2);
+  el.value = v;
+}
+
+function processCard(name, table, note, total){
+  const no = document.getElementById("cardNo").value.replace(/\s/g,'');
+  const exp = document.getElementById("cardExp").value;
+  const cvv = document.getElementById("cardCvv").value;
+  const cname = document.getElementById("cardName").value.trim();
+
+  if(no.length<16) return alert("Картын дугаар буруу байна.");
+  if(!/^\d{2}\/\d{2}$/.test(exp)) return alert("Хугацаа буруу (MM/YY).");
+  if(cvv.length<3) return alert("CVV буруу байна.");
+  if(!cname) return alert("Картын эзний нэрийг оруулна уу.");
+
+  document.getElementById("cartModalContent").innerHTML = `
+    <div class="pay-processing">
+      <div class="spinner"></div>
+      <h2>Төлбөр боловсруулж байна...</h2>
+      <p class="step-info">Картаас ${total.toLocaleString()}₮ суутгаж байна</p>
+    </div>`;
+
+  setTimeout(()=>{
+    showSuccess(name, table, "card");
+  }, 2000);
+}
+
+/* ---------- QR төлбөр ---------- */
+function showQRPayment(name, table, note, total, method){
+  const methodName = method === "qpay" ? "QPay" : "SocialPay";
+  const appName = method === "qpay" ? "QPay" : "SocialPay";
+
+  const qrData = `CAFE_ORDER|${method}|${total}|${Date.now()}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrData)}`;
+
+  document.getElementById("cartModalContent").innerHTML = `
+    <button class="close" onclick="closeModal('cartModal')">×</button>
+    <div class="qr-box">
+      <h2>📱 ${methodName}-ээр төлөх</h2>
+      <p class="step-info">Төлөх дүн: <b>${total.toLocaleString()}₮</b></p>
+      <img src="${qrUrl}" alt="QR Code">
+      <p class="step-info">${appName} аппаараа QR кодыг уншуулна уу</p>
+      <div id="payStatus">
+        <div class="spinner"></div>
+        <p>Төлбөр хүлээж байна...</p>
+      </div>
+    </div>`;
+
+  let seconds = 0;
+  const timer = setInterval(()=>{
+    seconds++;
+    const statusEl = document.getElementById("payStatus");
+    if(!statusEl){ clearInterval(timer); return; }
+
+    if(seconds >= 5){
+      clearInterval(timer);
+      statusEl.innerHTML = `<div class="paid-badge">✅ Төлбөр амжилттай!</div>`;
+      setTimeout(()=>showSuccess(name, table, method), 1200);
+    } else {
+      statusEl.innerHTML = `
+        <div class="spinner"></div>
+        <p>Төлбөр хүлээж байна... (${seconds}s)</p>`;
+    }
+  }, 1000);
+}
+
+/* ---------- Эхлүүлэх ---------- */
+render();
+updateCart();
+</script>
+</body>
+</html>
